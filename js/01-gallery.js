@@ -4,46 +4,51 @@ import { galleryItems } from './gallery-items.js';
 // console.log(galleryItems);
 
 
-const container = document.querySelector('.gallery');
-container.insertAdjacentHTML('afterbegin', createMarkup(galleryItems));
-container.addEventListener('click', handlerClick);
+const gallery = document.querySelector('.gallery');
+const markup = createGalleryItemsMarkup(galleryItems);
 
-function createMarkup(arr) {
-    return arr.map(({ preview, original, description }) => `
-    <li class="gallery__item">
-  <a class="gallery__link" href="${original}">
-    <img
-      class="gallery__image"
-      src="${preview}"
-      data-source="${original}"
-      alt="${description}"
-    />
-  </a>
-</li>`).join('');
-}
+gallery.insertAdjacentHTML('beforeend', markup);
+gallery.addEventListener("click", onImageClick);
 
-function handlerClick(event) {
+function createGalleryItemsMarkup(items) {
+    return galleryItems
+    .map(({ preview, original, description}) => {
+        return `
+            <li class="gallery__item">
+                <a class="gallery__link" href="${original}">
+                    <img
+                        class="gallery__image"
+                        src="${preview}"
+                        data-source="${original}"
+                        alt="${description}"
+                    />
+                </a>
+            </li>
+        `;
+    })
+    .join('');
+};
+
+function onImageClick(event) {
     event.preventDefault();
-    if (event.target === event.currentTarget) {
+
+    if(!event.target.classList.contains('gallery__image')) {
         return;
     }
 
-    const source = event.target.dataset.source;
+    const modalWindow = basicLightbox.create(`
+    <img src='${event.target.dataset.source}'>
+    `);
 
-    const galleryItem = galleryItems.find(({ original }) => original === source);
-    
-    const instance = basicLightbox.create(`
-    <div class="modal">
-    <img
-      class="gallery__image"
-      src="${galleryItem.original}"
-      data-source="${galleryItem.original}"
-      alt="${galleryItem.description}"
-    />
-    </div>
-`)
+    modalWindow.show();
 
-instance.show()
-}
+    window.addEventListener('keydown', onEscapePress);
 
-console.dir(galleryItems);
+    function onEscapePress(event) {
+        if (event.code === 'Escape') {
+        modalWindow.close();
+
+        window.removeEventListener('keydown', onEscapePress);
+        }
+    };
+};
